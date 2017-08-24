@@ -153,9 +153,11 @@ echo "[ FALHA ] Ocorreram erros em fazer o deauth do cliente: $CLIENTE"
 function matar_todos_processos() {
 
 iw dev wlan0mon del
-killall xterm &> /dev/null
-killall airodump-ng 2> /dev/null
-killall aireplay-ng &> /dev/null
+pkill xterm
+pkill airodump-ng
+pkill aireplay-ng
+pkill airmon-ng 
+service networking restart
 
 }
 
