@@ -19,10 +19,6 @@ DIR=`pwd`
 #ARQTMP=
 ARQ=teste
 
-
-
-#MENU
-
 # funçoes a serem criadas
 #public_ip
 #verificar_usuario
@@ -38,10 +34,10 @@ function verificar_dependencias(){
 		exit 1
 	fi
 	
-	if ! hash xfce4-terminal 2> /dev/null; then
-		echo "[ FALHA ] xfce4-terminal nao instalado!"
-		exit 1	
-	fi
+#	if ! hash xfce4-terminal 2> /dev/null; then
+#		echo "[ FALHA ] xfce4-terminal nao instalado!"
+#		exit 1	
+#	fi
 
 	if ! hash reaver 2> /dev/null; then
 		echo "[ FALHA ] reaver nao instalado!"
@@ -77,7 +73,7 @@ fi
 
 function escanear_todas_redes(){
 # Escanear todas redes encontradas pelo adaptador de rede sem fio. Caso contrario, emite um erro.
-(xterm -geometry 85x25 -title "Escaneando todas as redes" -e "airodump-ng wlan0mon" &) || \
+(xterm -geometry 90x25 -title "Escaneando todas as redes" -e "airodump-ng wlan0mon" &) || \
 echo -e "[ FALHA ] Ocorreram erros!"
 
 }
@@ -115,7 +111,7 @@ if [ -z $BSSID  ] || [ -z $ESSID ] || [ -z $CHANNEL ] || [ -z INTERFACE_MON ] ; 
 	exit 1
 fi
 
-(xterm -geometry 85x25 -title "Escaneando rede especifica" -e "airodump-ng \
+(xterm -geometry 90x25 -title "Escaneando rede especifica" -e "airodump-ng \
 --bssid $BSSID \
 --essid $ESSID \
 --channel $CHANNEL \
@@ -198,4 +194,5 @@ conf_interface
 iniciar_mon
 escanear_todas_redes
 setar_parametros
-#matar_todos_processos
+sleep 30
+matar_todos_processos
