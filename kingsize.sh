@@ -3,10 +3,14 @@
 # Configurando variaveis do shell
 
 
-#DATA=`date +'%d-%m-%Y-%H-%M'`
-TITLE="kING SIZE"
-#VERSAO="v0.1"
-#LICENSE="MIT Lincense"
+
+DATA=`date +'%d-%m-%Y-%H-%M'`
+TITLE="King Size Cracking WPA/WPA2"
+AUTHOR="Joao Lucas <joaolucas@linuxmail.org>"
+VERSION="v0.1"
+LICENSE="MIT License"
+OUTPUT="Capturas"
+#WORDLIST="/home/joao_lucas/wordlists/rockyou.txt"
 #HOSTNAME=`hostname`
 #INTERFACE=`ip route show | awk '/default via/ {print $5}'`
 #INTERFACE=`iw dev | awk '/Interface/' {print $2}'`
