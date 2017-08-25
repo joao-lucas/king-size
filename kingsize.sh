@@ -4,6 +4,7 @@
 
 
 #DATA=`date +'%d-%m-%Y-%H-%M'`
+TITLE="kING SIZE"
 #VERSAO="v0.1"
 #LICENSE="MIT Lincense"
 #HOSTNAME=`hostname`
@@ -33,16 +34,16 @@ function verificar_dependencias(){
 		echo "[ FALHA ] aircrack-ng nao instalado!"
 		exit 1
 	fi
-	
-#	if ! hash xfce4-terminal 2> /dev/null; then
+
+#	if ! ahash xfce4-terminal 2> /dev/null; then
 #		echo "[ FALHA ] xfce4-terminal nao instalado!"
-#		exit 1	
+#		exit 1
 #	fi
 
 	if ! hash reaver 2> /dev/null; then
 		echo "[ FALHA ] reaver nao instalado!"
 		exit 1
-	fi	
+	fi
 }
 
 function iniciar_mon() {
@@ -50,6 +51,7 @@ function iniciar_mon() {
 iw dev wlan0 interface add wlan0mon type monitor &> /dev/null && ifconfig wlan0mon up &> /dev/null && \
 echo -e "[ ok ] modo monitoramento ativado!" || echo -e "[ falha ] erro em iniciar modo monitor."
 
+menu
 }
 
 function matar_processos_que_atrapalham_suite(){
@@ -63,18 +65,23 @@ airmon-ng check kill &> /dev/null
 
 }
 
-function conf_interface(){
+function up_interface_wlan(){
 ifconfig wlan0 &> /dev/null
+# Ativa a interface wlan0, caso não esteja ativada
 if [ $? != 0 ]; then
 	ifconfig wlan0 up &> /dev/null
 fi
 
 }
 
-function escanear_todas_redes(){
-# Escanear todas redes encontradas pelo adaptador de rede sem fio. Caso contrario, emite um erro.
+function varrer_todas_redes(){
+# Escanear todas redes encontradas pelo adaptador da rede sem fio. Caso contrario, emite um mensagem de erro.
 (xterm -geometry 90x25 -title "Escaneando todas as redes" -e "airodump-ng wlan0mon" &) || \
 echo -e "[ FALHA ] Ocorreram erros!"
+sleep 3
+setar_parametros
+
+menu
 
 }
 
@@ -152,7 +159,7 @@ echo "[ FALHA ] "
 
 }
 
-function matar_todos_processos() {
+function encerrar_todos_processos() {
 iw dev wlan0mon del
 pkill xterm
 pkill airodump-ng
@@ -194,11 +201,38 @@ return 0
 #echo
 #}
 
+function menu() {
+while true; do
+	MENU=$(yad --title "$TITLE" --list --text="\nKing Size Cracking\n" \
+	--column=" :IMG" \
+	--column="Opcao" \
+	--column="Descricao" \
+	--window-icon="gtk-connect" \
+	--image gtk-index \
+	--image-on-top \
+	--maximized \
+	--no-buttons \
+	find "Monitor" "Ativar modo monitoramento" \
+	find "Escanear" "Escanear todas redes alcancadas" \
+	gtk-execute "Deauth" "Fazer desautenticacao dos hosts no AP" \
+	gtk-execute "Injetar" "Injetar pacotes no AP" \
+	gtk-quit "Sair" "Sair do script")
+
+	MENU=$(echo $MENU | cut -d "|" -f2)
+
+	case "$MENU" in
+		"Monitor") iniciar_mon ;;
+		"Escanear") varrer_todas_redes ;;
+		"Deauth") deauth_todos ;;
+		"Injetar") injetar ;;
+		"Sair") encerrar_todos_processos; exit 0 ;;
+	esac
+done
+}
+
+
+
+
 verificar_dependencias
-matar_processos_que_atrapalham_suite
-conf_interface
-iniciar_mon
-escanear_todas_redes
-setar_parametros
-sleep 30
-matar_todos_processos
+up_interface_wlan
+menu
