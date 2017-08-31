@@ -186,6 +186,36 @@ return 0
 #echo
 #}
 
+function menu() {
+while true; do
+	MENU=$(yad --title "$TITLE" --list --text="\nKing Size Cracking\n" \
+	--column=" :IMG" \
+	--column="Opcao" \
+	--column="Descricao" \
+	--window-icon="gtk-connect" \
+	--image gtk-index \
+	--image-on-top \
+	--maximized \
+	--no-buttons \
+	find "Monitor" "Ativar modo monitoramento" \
+	find "Escanear" "Escanear todas redes alcancadas" \
+	gtk-execute "Deauth" "Fazer desautenticacao dos hosts no AP" \
+	gtk-execute "Injetar" "Injetar pacotes no AP" \
+	gtk-quit "Sair" "Sair do script")
+
+	MENU=$(echo $MENU | cut -d "|" -f2)
+
+	case "$MENU" in
+		"Monitor") iniciar_mon ;;
+		"Escanear") varrer_todas_redes ;;
+		"Deauth") deauth_todos ;;
+		"Injetar") injetar ;;
+		"Sair") encerrar_todos_processos; exit 0 ;;
+	esac
+done
+}
+
+
 verificar_dependencias
 matar_processos_que_atrapalham_suite
 conf_interface
