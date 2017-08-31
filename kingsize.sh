@@ -60,6 +60,7 @@ airmon-ng check kill &> /dev/null
 }
 
 function conf_interface(){
+# Verifica se a interface esta ativa, caso nao esteja, ativa a interface
 ifconfig wlan0 &> /dev/null
 if [ $? != 0 ]; then
 	ifconfig wlan0 up &> /dev/null
@@ -103,11 +104,12 @@ function setar_parametros(){
 
 function varrer_uma_rede() {
 setar_parametros
+
 # Verifica se os 4 parametros obrigatorios para uso da função estão setados.
-if [ -z $BSSID  ] || [ -z $ESSID ] || [ -z $CHANNEL ] || [ -z $INTERFACE_MON ] ; then
-	echo "[ FALHA ] Falta parametros para o escaneamento da rede!"
-	exit 1
-fi
+[ -z $BSSID  ] || echo "[ FALHA ] O campo obrigatorio BSSID esta vazio" 
+[ -z $ESSID ] || echo "[ FALHA ] O campo obrigatorio ESSID esta vazio" 
+[ -z $CHANNEL ] || echo "[ FALHA ] O campo obrigatorio Channel esta vazio" 
+[ -z $INTERFACE_MON ] || echo "[ FALHA ] O campo obrigatorio Monitor esta vazio" 
 
 # Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
