@@ -34,7 +34,7 @@ function verificar_dependencias(){
 	fi
 
 	if ! hash aircrack-ng 2>/dev/null; then
-		
+
 		echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} aircrack-ng nao instalado! ${branco}"
 		exit 1
 	fi
