@@ -42,16 +42,23 @@ function verificar_dependencias(){
 }
 
 function iniciar_mon() {
+# Verifica se a interface de monitoramento ja esta ativada
+iwconfig wlan0mon &> /dev/null
+if [ $? -eq 0 ]; then
+	echo "[ OK ] Interface de monitoramento ja estava ativa!" 
+	menu
+fi
+
 # Adiciona a interface de monitoramento wlan0mon. Caso contrario, emite mensagem de erro
 iw dev wlan0 interface add wlan0mon type monitor &> /dev/null && ifconfig wlan0mon up &> /dev/null && clear && \
-echo -e "[ ok ] modo monitoramento ativado!" || echo -e "[ falha ] erro em iniciar modo monitor."
+echo -e "[ OK ] Modo monitoramento ativado!" || echo -e "[ FALHA ] Ocorreram erros em iniciar modo monitor."
 
 }
 
 function matar_processos_que_atrapalham_suite(){
-# há alguns processos que atrapalham a suite aircrack
+# há alguns processos que atrapalham a suite aircrack-ng
 # exemplo: NetworkManager, wpa_supplicant, dhclient, avahi-daemon...
-# Para verificar se existem processos que atrapalham a suite aircrack:
+# Para verificar se existem processos que atrapalham a suite aircrack-ng:
 # 	airmon-ng check
 
 # Matar processos que atrapalham a suite aircrack-ng
@@ -229,8 +236,6 @@ function menu(){
 while true; do
 cat << EOF
 1. Ativar a interface em modo monitoramento
-#2. WEP
-#3. WPA/WPA2 e WPS
 2. Varrer todas as redes sem fio alcancadas
 3. Varrer rede especifica
 4. Desautenticar todos as STA de um AP
