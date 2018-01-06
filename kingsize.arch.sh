@@ -198,7 +198,7 @@ setar_parametros
 iw dev $INTERFACEMON set channel $CHANNEL
 # Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
--e "airodump-ng --ivs --bssid $BSSID --channel $CHANNEL --write $OUTPUT/$HANDSHAKE $INTERFACEMON" &) || \
+-e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $OUTPUT/$HANDSHAKE $INTERFACEMON" &) || \
 echo -e "${br}[${vm} FALHA ${br}]${azul} Ocorreram erros em escanear a rede sem fio: $ESSID ${br} \n"
 
 }
@@ -243,7 +243,7 @@ function brute_force_psk(){
 
 # recebe o nome correto do arquivo handshake que foi criado com o airodump
 BPM=`ls $OUTPUT | grep $HANDSHAKE | grep cap$`
-#echo "SEM dir $BPM"
+echo "SEM dir $BPM"
 
 BPM=$OUTPUT/$BPM
 echo "Caminho do arquivo handshake: $BPM" 
