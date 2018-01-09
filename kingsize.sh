@@ -6,9 +6,10 @@ VERSION="v0.1"
 LICENSE="MIT Lincense"
 AUTHOR="Joao Lucas"
 #HOSTNAME=`hostname`
+INTERFACE="wlp0s20u3"
 #INTERFACE=`ip route show | awk '/default via/ {print $5}'`
 #INTERFACE=`iw dev | awk '/Interface/' {print $2}'`
-#INTERFACEMON=mon0
+INTERFACEMON="mon0"
 #GATEWAY=`ip route show | awk '/default via/ {print $3}'`
 #IPINTERNO=`ip route show | awk '/src/ {print $9}'`
 #IPEXTERNO=`curl -s ipinfo.io/ip`
@@ -17,15 +18,6 @@ AUTHOR="Joao Lucas"
 DIR=`pwd`
 #ARQTMP=
 ARQ=teste
-
-function cores() {
-	escape="\033";
-	branco="${escape}[0m";
-	azul="${escape}[34m";
-	vermelho="${escape}[31m";
-	verde="${escape}[32m";
-	amarelo="${escape}[33m";
-}
 
 function verificar_dependencias(){
 	if ! hash yad 2> /dev/null; then
@@ -45,6 +37,10 @@ function verificar_dependencias(){
 	fi
 }
 
+function verificar_usuario(){
+	if [ `id -u` != "0" ]; then echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Executar o script como root! ${branco}"; exit 1; fi;
+	
+}
 
 function sobre(){
 		yad --text="$TITLE \nversao $VERSION \n\n \
@@ -64,14 +60,14 @@ function sobre(){
 
 function iniciar_mon() {
 # Verifica se a interface de monitoramento ja esta ativada
-iwconfig wlan0mon &> /dev/null
+iwconfig $INTERFACEMON &> /dev/null
 if [ $? -eq 0 ]; then
 	echo -e "${branco}[${verde} OK ${branco}]${azul} Interface de monitoramento ativa! ${branco} \n"
 	menu
 fi
 
 # Adiciona a interface de monitoramento wlan0mon. Caso contrario, emite mensagem de erro
-iw dev wlan0 interface add wlan0mon type monitor &> /dev/null && ifconfig wlan0mon up &> /dev/null && \
+iw dev $INTERFACE interface add $INTERFACEMON type monitor &> /dev/null && ifconfig $INTERFACEMON up &> /dev/null && \
 echo -e "${branco}[${verde} OK ${branco}]${azul} Monitoramento ativado! ${branco} \n" || \
 echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em iniciar o modo monitor! ${branco} \n"
 
@@ -90,9 +86,9 @@ airmon-ng check kill &> /dev/null
 
 function conf_interface(){
 # Verifica se a interface esta ativa, caso nao esteja, ativa a interface
-ifconfig wlan0 &> /dev/null
+ifconfig $INTERFACE &> /dev/null
 if [ "$?" != 0 ]; then
-	ifconfig wlan0 up &> /dev/null
+	ifconfig $INTERFACE up &> /dev/null
 fi
 
 }
@@ -135,9 +131,9 @@ esac
 
 function varrer_todas_redes(){
 # Escanear todas redes encontradas pelo adaptador de rede sem fio. Caso contrario, emite um erro.
-(xterm -geometry 85x25 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACE_MON" \
--e "airodump-ng wlan0mon" &) || \
-echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACE_MON esta ativa! ${azul} \n"
+(xterm -geometry 85x25 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACEMON" \
+-e "airodump-ng $INTERFACEMON" &) || \
+echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACEMON esta ativa! ${azul} \n"
 
 }
 
@@ -178,10 +174,10 @@ setar_parametros
 #[ $INTERFACE_MON ] || echo "[ FALHA ] O campo obrigatorio Monitor esta vazio"
 
 # Ajustar a interface de monitoramento para varrer hosts apenas no canal desejado
-iw dev $INTERFACE_MON set channel $CHANNEL
+iw dev $INTERFACEMON set channel $CHANNEL
 # Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
--e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $DIR/$ARQ $INTERFACE_MON" &) || \
+-e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $DIR/$ARQ $INTERFACEMON" &) || \
 echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em escanear a rede sem fio: $ESSID ${branco} \n"
 
 }
@@ -189,7 +185,7 @@ echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em escane
 function deauth_todos_clientes() {
 # Envia 1 pacote de Desautenticação para todas as STA conectadas ao AP
 (xterm -geometry 85x25 -title "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
--e  "aireplay-ng -0 1 -a $BSSID -e $ESSID $INTERFACE_MON --ignore-negative-one" &) || \
+-e  "aireplay-ng -0 1 -a $BSSID -e $ESSID $INTERFACEMON --ignore-negative-one" &) || \
 echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em fazer deauth dos hosts no AP: $ESSID ${branco} \n"
 
 }
@@ -197,7 +193,7 @@ echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em fazer 
 function deauth_cliente_especifico() {
 # Envia 1 pacote de Desautenticação para uma STA conectada a um AP especifico
 (xterm -geometry 85x25 -title "Desautenticando (Deauth) a STA $CLIENT na rede $ESSID" \
--e "aireplay-ng -0 1 -a $BSSID -c $CLIENT $INTERFACE_MON --ignore-negative-one" &) || \
+-e "aireplay-ng -0 1 -a $BSSID -c $CLIENT $INTERFACEMON --ignore-negative-one" &) || \
 echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID ${branco} \n"
 
 }
@@ -205,7 +201,7 @@ echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em fazer 
 function deauth_brute_force() {
 # Envia infinitos pacotes de deauth, causando um ataque de negacao de servico
 (xterm -geometry 85x25 -title "Enviando infinitos pacotes de deauth" \
--e "aireplay-ng -0 0 -a $BSSID -e $ESSID $INTERFACE_MON --ignore-negative-one" &) || \
+-e "aireplay-ng -0 0 -a $BSSID -e $ESSID $INTERFACEMON --ignore-negative-one" &) || \
 echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em realizar negacao de servicos na rede sem fio: $ESSID ${branco} \n"
 
 }
@@ -213,7 +209,7 @@ echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros em realiz
 function injetar(){
 #while true; do
 # Realizar testes de injecao contra um AP
-aireplay-ng -9 -a $BSSID -a $BSSID $INTERFACE_MON --ignore-negative-one || \
+aireplay-ng -9 -a $BSSID -a $BSSID $INTERFACEMON --ignore-negative-one || \
 echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Nao foi possivel injetar pacotes no AP: $ESSID ${branco} \n"
 
 #done
@@ -232,7 +228,7 @@ echo -e "${branco}[${vermelho} FALHA ${branco}]${azul} Ocorreram erros, verifiqu
 
 function matar_todos_processos() {
 # Matar todos processos e, reniciar servicos de gerenciamento de rede
-iw dev wlan0mon del
+iw dev $INTERFACEMON del
 pkill xterm
 pkill airodump-ng
 pkill aireplay-ng
@@ -261,7 +257,7 @@ echo -e "${vermelho} ▒ ▒▒ ▓▒░▓  ░ ▒░   ▒ ▒  ░▒   ▒
 echo -e "${vermelho} ░ ░▒ ▒░ ▒ ░░ ░░   ░ ▒░  ░   ░    ░ ░▒  ░ ░ ▒ ░░░▒ ▒ ░ ▒ ░ ░  ░ "
 echo -e "${vermelho} ░ ░░ ░  ▒ ░   ░   ░ ░ ░ ░   ░    ░  ░  ░   ▒ ░░ ░ ░ ░ ░   ░    "
 echo -e "${vermelho} ░  ░    ░           ░       ░          ░   ░    ░ ░       ░  ░ "
-echo -e "${vermelho}                                  ░ ${amarelo} Author: Joao Lucas ${branco}"
+echo -e "${vermelho}                                  ░ ${verde} Author: Joao Lucas ${branco}"
 
 
 }
@@ -306,13 +302,13 @@ echo -e "${vermelho}                                  ░ ${amarelo} Author: Joa
 function menu(){
 while true; do
 cat << EOF
-===============================================================
- 1. Ativar modo monitoramento
- 2. Varrer
- 3. Desautenticar
- 4. Injetar
- 5. Sobre
- 99. Sair
+   _____________________________________________________________
+x0[ 1. Ativar modo monitoramento				]
+x0[ 2. Varrer							]
+x0[ 3. Desautenticar 						] 
+x0[ 4. Injetar							]		 
+x0[ 5. Sobre 							] 
+x0[ 99. Sair						________] 
 EOF
 read -p "-> " opt
 
@@ -332,6 +328,7 @@ done
 
 cores
 banner
+verificar_usuario
 verificar_dependencias
 matar_processos_que_atrapalham_suite
 conf_interface
