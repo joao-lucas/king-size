@@ -10,6 +10,7 @@ INTERFACEMON="mon0"
 DIR=`pwd`
 OUTPUT=`echo $DIR/Capturas`
 HANDSHAKE=`echo $DATA`
+MACATUALARCH=`ip address show dev $INTERFACE | awk '/ether/ {print $2}'`
 
 
 #INTERFACE=`ip route show | awk '/default via/ {print $5}'`
@@ -18,7 +19,10 @@ HANDSHAKE=`echo $DATA`
 #HOSTNAME=`hostname`
 #IPINTERNO=`ip route show | awk '/src/ {print $9}'`
 #IPEXTERNO=`curl -s ipinfo.io/ip`
-#MACATUAL=`ip address | awk '/ether/ {print $2}'`
+
+#MACATUALKALI=`ip address | awk '/ether/ {print $2}'`
+
+
 #MACFALSO=
 
 
@@ -196,7 +200,7 @@ setar_parametros
 
 # Ajustar a interface de monitoramento para varrer hosts apenas no canal desejado
 iw dev $INTERFACEMON set channel $CHANNEL
-# Capture no minimo 5000 (5 mil) pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
+# Capture no minimo 5 mil pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
 -e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $OUTPUT/$HANDSHAKE $INTERFACEMON" &) || \
 echo -e "${br}[${vm} FALHA ${br}]${azul} Ocorreram erros em escanear a rede sem fio: $ESSID ${br} \n"
@@ -281,6 +285,7 @@ function alterar_mac() {
 
 function banner(){
 
+echo -e "${vd} 					     ${br} Author: ${vd}Joao Lucas ${br}"
 echo -e "${vm}     ██ ▄█▀ ██▓ ███▄    █   ▄████      ██████  ██▓▒███████▒▓█████  "
 echo -e "${vm}     ██▄█▒ ▓██▒ ██ ▀█   █  ██▒ ▀█▒   ▒██    ▒ ▓██▒▒ ▒ ▒ ▄▀░▓█   ▀  "
 echo -e "${vm}    ▓███▄░ ▒██▒▓██  ▀█ ██▒▒██░▄▄▄░   ░ ▓██▄   ▒██▒░ ▒ ▄▀▒░ ▒███    "
@@ -289,8 +294,9 @@ echo -e "${vm}    ▒██▒ █▄░██░▒██░   ▓██░░�
 echo -e "${vm}    ▒ ▒▒ ▓▒░▓  ░ ▒░   ▒ ▒  ░▒   ▒    ▒ ▒▓▒ ▒ ░░▓  ░▒▒ ▓░▒░▒░░ ▒░ ░ "
 echo -e "${vm}    ░ ░▒ ▒░ ▒ ░░ ░░   ░ ▒░  ░   ░    ░ ░▒  ░ ░ ▒ ░░░▒ ▒ ░ ▒ ░ ░  ░ "
 echo -e "${vm}    ░ ░░ ░  ▒ ░   ░   ░ ░ ░ ░   ░    ░  ░  ░   ▒ ░░ ░ ░ ░ ░   ░    "
-echo -e "${vm}    ░  ░    ░           ░       ░          ░   ░    ░ ░       ░  ░ "
-echo -e "${vm}                                     ░ 	     ${vd} Author: Joao Lucas ${br}"
+echo -e "${vm}    ░  ░    ░           ░       ░          ░   ░    ░ ░       ░  ░ ${br} v0.1"
+echo -e "${vm}                                     ░ 	    ${br} " 
+echo -e "	   Interface:${am} $INTERFACE${br} - MAC Atual:${am} $MACATUALARCH${br}"
 
 
 }
