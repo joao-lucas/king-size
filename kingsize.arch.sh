@@ -275,14 +275,6 @@ pkill yad
 
 }
 
-function alterar_mac() {
-	ifdown $INTERFACE &> /dev/null || echo "[ ok ] ifdown"
-	macchanger -r $INTERFACE &> /dev/null
-	ifup $INTERFACE &> /dev/null || echo "[ ok ] ifup"
-
-	#MACFALSO=`ip address | awk '/ether/ {print $2}'
-}
-
 function banner(){
 
 echo -e "${vd} 					     ${br} Author: ${vd}Joao Lucas ${br}"
@@ -296,19 +288,23 @@ echo -e "${vm}    ░ ░▒ ▒░ ▒ ░░ ░░   ░ ▒░  ░   ░   
 echo -e "${vm}    ░ ░░ ░  ▒ ░   ░   ░ ░ ░ ░   ░    ░  ░  ░   ▒ ░░ ░ ░ ░ ░   ░    "
 echo -e "${vm}    ░  ░    ░           ░       ░          ░   ░    ░ ░       ░  ░ ${br} v0.1"
 echo -e "${vm}                                     ░ 	    ${br} " 
-echo -e "	   Interface:${am} $INTERFACE${br} - MAC Atual:${am} $MACATUALARCH${br}"
+echo -e "${am}   _---------[${br} Interface:${am} $INTERFACE${br} - MAC Atual:${am} $MACATUALARCH ]${am}------_"
 
 
 }
 
-
-
+#function alterar_mac() {
+#	ifdown $INTERFACE &> /dev/null || echo "[ ok ] ifdown"
+#	macchanger -r $INTERFACE &> /dev/null
+#	ifup $INTERFACE &> /dev/null || echo "[ ok ] ifup"
+#
+#	#MACFALSO=`ip address | awk '/ether/ {print $2}'
+#}
 #function ip_publico() {
 # Obtem oo endereço ip publico
 #IPPUBLICO=`curl -s ipinfo.io/ip`
 # precisa testar se o curl executou com sucesso
 #}
-
 #function menu() {
 #while true; do
 #	MENU=$(yad --title "$TITLE" --list --text="\nKing Size Cracking\n" \
@@ -340,7 +336,7 @@ echo -e "	   Interface:${am} $INTERFACE${br} - MAC Atual:${am} $MACATUALARCH${br
 
 function menu(){
 while true; do
-echo -e "${am}   _____________________________________________________________________${br}"
+echo -e "${am}  [_____________________________________________________________________]${br}"
 echo -e "${vm}x0${am}[${az} 1. ${br}Ativar modo monitoramento  ${am}					]${br}"
 echo -e "${vm}x0${am}[${az} 2. ${br}Varrer			${am}					]${br}"
 echo -e "${vm}x0${am}[${az} 3. ${br}Desautenticar 		${am}					]${br}" 
@@ -348,7 +344,7 @@ echo -e "${vm}x0${am}[${az} 4. ${br}Injetar			${am}					]${br}"
 echo -e "${vm}x0${am}[${az} 5. ${br}Quebrar senha		${am}					]${br}"
 echo -e "${vm}x0${am}[${az} 6. ${br}Sobre 			${am}					]${br}"
 echo -e "${vm}x0${am}[${az} 99.${br} Sair			${am}			________________]${br}"
-read -p "-> " opt
+read -p "  [-> " opt
 
 case "$opt" in
 	"1") iniciar_mon ;;
@@ -366,7 +362,7 @@ done
 }
 
 cores
-echo "handshake $HANDSHAKE"
+#echo "handshake $HANDSHAKE"
 banner
 verificar_usuario
 verificar_dependencias
