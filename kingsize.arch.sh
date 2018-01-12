@@ -11,7 +11,7 @@ DIR=`pwd`
 OUTPUT=`echo $DIR/Capturas`
 HANDSHAKE=`echo $DATA`
 MACATUALARCH=`ip address show dev $INTERFACE | awk '/ether/ {print $2}'`
-WORDLIST="/home/joao_lucas/wordlist/rockyou-1.txt"
+WORDLIST="/home/joao_lucas/wordlists/rockyou-1.txt"
 
 #INTERFACE=`ip route show | awk '/default via/ {print $5}'`
 #INTERFACE=`iw dev | awk '/Interface/' {print $2}'`
@@ -69,9 +69,9 @@ function sobre(){
 	<https://github.com/joao-lucas/kingsizecracking> \n\n \
 	Author: $AUTHOR" \
 		--text-align=center \
-    --image gtk-about \            
+    --image gtk-about \
     --no-markup \
-    --image-on-top \              
+    --image-on-top \
     --button gtk-close \
     --undecorated \
     --buttons-layout=center \
@@ -113,12 +113,13 @@ fi
 
 }
 
+
 ## ESCANEAR
 function varrer(){
 echo -e "${az} 1.${br} Varrer todas redes sem fio alcancadas"
 echo -e "${az} 2.${br} Varrer uma rede sem fio especifica"
 echo -e "${az} 99.${br} Voltar"
-read -p "-> " opt
+read -p " >>> " opt
 
 case "$opt" in
 	"1") varrer_todas_redes ;;
@@ -135,7 +136,7 @@ echo -e "${az} 1.${br} Desautenticar todos as STA de um AP"
 echo -e "${az} 2.${br} Desautenticar uma STA de um AP"
 echo -e "${az} 3.${br} Enviar infinitos pacotes de deauth, causando negacao de servicos"
 echo -e "${az} 99.${br} Voltar ao menu"
-read -p "-> " opt
+read -p " >>> " opt
 
 case "$opt" in
 	"1") deauth_todos_clientes ;;
@@ -150,29 +151,28 @@ esac
 
 function varrer_todas_redes(){
 # Escanear todas redes encontradas pelo adaptador de rede sem fio. Caso contrario, emite um erro.
-(xterm -geometry 100x22+700+0 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACEMON" \
+(xterm -geometry 100x23+680+0 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACEMON" \
 -e "airodump-ng $INTERFACEMON" &) || \
 echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACEMON esta ativa! ${azul} \n"
 
 }
 
 function setar_parametros(){
-  PARAMETROS=$(yad --title "teste" \
-    --text "Campos Obrigatorios\n" \
-     --form \
-     --field "bssid" "" \
-     --field "essid" "" \
-     --field "channel" "" \
-     --field "client" "" \
-     --field "monitor" "mon0" \
-     --field "wordlist" "$WORDLIST" \
-     --field "saida" "$HANDSHAKE" \
-     --button gtk-ok \
-     --button cancel \
-     --center);
-	 
+	PARAMETROS=$(yad --title "Setar parametros" \
+	--text "(*) Campos obrigatorios                                      \n" \
+	--form \
+	--field "* BSSID" "" \
+	--field "* ESSID" "" \
+	--field "* Channel" "" \
+	--field "Client" "" \
+	--field "* Monitor" " mon0" \
+	--field "* Wordlist" "$WORDLIST" \
+	--field "* Saida" "$HANDSHAKE" \ 
+	--button gtk-ok \
+	--button cancel \
+	--center);
 
-  #--field "[ Wordlist ]":BTN "yad --file --maximized" \ 
+	#--field "[ Wordlist ]":BTN "yad --file --maximized" \
 
 	BSSID=$(echo "$PARAMETROS" | cut -d '|' -f 1)
 	ESSID=$(echo "$PARAMETROS" | cut -d '|' -f 2)
@@ -181,22 +181,22 @@ function setar_parametros(){
 	INTERFACE_MON=$(echo "$PARAMETROS" | cut -d '|' -f 5)
 	WORDLIST=$(echo "$PARAMETROS" | cut -d '|' -f 6)
 	HS=$(echo "$PARAMETROS" | cut -d '|' -f 7)
-
+	#ARQ=$(echo "$PARAMETROS" | cut -d '|' -f 8)
 }
 
 function varrer_uma_rede() {
 setar_parametros
 
 # Verifica se os 4 parametros obrigatorios para uso da função estão setados
-if [[ -z $BSSID ]]; then echo -e "  [${vm} FALHA${br} ] O campo obrigatorio BSSID esta vazio!"; menu; fi;
-if [[ -z $ESSID ]]; then echo -e "  [${vm} FALHA${br} ] O campo obrigatorio ESSID esta vazio!"; menu; fi;
-if [[ -z $CHANNEL ]]; then echo -e "  [${vm} FALHA${br} ] O campo obrigatorio Channel esta vazio!"; menu; fi;
-if [[ -z $INTERFACE_MON ]]; then echo -e "  [${vm} FALHA${br} ] O campo obrigatorio Monitor esta vazio!"; menu; fi;
+if [[ -z $BSSID  ]]; then echo "[ FALHA ] O campo obrigatorio BSSID esta vazio"; menu; fi;
+if [[ -z $ESSID ]]; then echo "[ FALHA ] O campo obrigatorio ESSID esta vazio"; menu; fi;
+if [[ -z $CHANNEL ]]; then echo "[ FALHA ] O campo obrigatorio Channel esta vazio"; menu; fi;
+if [[ -z $INTERFACE_MON ]]; then echo "[ FALHA ] O campo obrigatorio Monitor esta vazio"; menu; fi;
 
 # Ajustar a interface de monitoramento para varrer hosts apenas no canal desejado
 iw dev $INTERFACEMON set channel $CHANNEL 2> /dev/null
 # Capture no minimo 5 mil pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
-(xterm -geometry 100x22+700+400 -title "Escaneando rede a sem fio $ESSID" \
+(xterm -geometry 100x23+680+360 -title "Escaneando rede a sem fio $ESSID" \
 -e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $OUTPUT/$HANDSHAKE $INTERFACEMON" &) || \
 echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em escanear a rede sem fio: $ESSID ${br} \n"
 
@@ -204,7 +204,7 @@ echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em escanear a rede se
 
 function deauth_todos_clientes() {
 # Envia 1 pacote de Desautenticação para todas as STA conectadas ao AP
-(xterm -geometry 100x20+400+400  -title "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
+(xterm -geometry 100x23+250+200 -title "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
 -e  "aireplay-ng -0 1 -a $BSSID -e $ESSID $INTERFACEMON --ignore-negative-one" &) || \
 echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em fazer deauth dos hosts no AP: $ESSID ${br} \n"
 
@@ -212,7 +212,7 @@ echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em fazer deauth dos h
 
 function deauth_cliente_especifico() {
 # Envia 1 pacote de Desautenticação para uma STA conectada a um AP especifico
-(xterm -geometry 100x20+400+400 -title "Desautenticando (Deauth) a STA $CLIENT na rede $ESSID" \
+(xterm -geometry 100x23+250+200 -title "Desautenticando (Deauth) a STA $CLIENT na rede $ESSID" \
 -e "aireplay-ng -0 1 -a $BSSID -c $CLIENT $INTERFACEMON --ignore-negative-one" &) || \
 echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID ${br} \n"
 
@@ -220,7 +220,7 @@ echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em fazer o deuth da S
 
 function deauth_brute_force() {
 # Envia infinitos pacotes de deauth, causando um ataque de negacao de servico
-(xterm -geometry 100x20+400+400 -title "Enviando infinitos pacotes de deauth" \
+(xterm -geometry 100x23+250+200 -title "Enviando infinitos pacotes de deauth" \
 -e "aireplay-ng -0 0 -a $BSSID -e $ESSID $INTERFACEMON --ignore-negative-one" &) || \
 echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em realizar negacao de servicos na rede sem fio: $ESSID ${br} \n"
 
@@ -245,16 +245,20 @@ BPM=`ls $OUTPUT | grep $HANDSHAKE | grep cap$`
 echo "SEM dir $BPM"
 
 BPM=$OUTPUT/$BPM
-echo "Caminho do arquivo handshake: $BPM" 
-echo "Wordlist: $WORDLIST"
+#echo "Caminho do arquivo handshake: $BPM" 
+#echo "Wordlist: $WORDLIST"
 
 # Exclui dados desnecessários, deixando apenas o 4-way handshake no arquivo para a tentativa de quebra
 #wpaclean $HS.cap $OUTPUT/handshake.cap 
 
 # Realizar a quebra da senha, por meio de um dicionario (wordlist)
-(aircrack-ng -w $WORDLIST $BPM | tee -a resultado_quebra) || \
+(aircrack-ng -w $WORDLIST $BPM | tee -a result_quebra) || \
 echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros, verifique se foi capturado 4-way handshake e se o caminho da wordlist esta correto ${br} \n"
 
+
+SENHA=$(cat -v result_quebra | awk '/KEY FOUND!/ {print $4}' | uniq)
+
+echo "[][][][][] SENHA ENCONTRADA: $SENHA [][][][][]"
 }
 
 function matar_todos_processos() {
@@ -329,17 +333,16 @@ echo -e "${am}   _---------[${br} Interface:${am} $INTERFACE${br} - MAC Atual:${
 #}
 
 function menu(){
-trap menu 2 20
 while true; do
-  echo -e "${am}  [_____________________________________________________________________]${br}"
-  echo -e "${vm}x0${am}[${az} 1. ${br}Ativar modo monitoramento  ${am}					]${br}"
-  echo -e "${vm}x0${am}[${az} 2. ${br}Varrer			${am}					]${br}"
-  echo -e "${vm}x0${am}[${az} 3. ${br}Desautenticar 		${am}					]${br}" 
-  echo -e "${vm}x0${am}[${az} 4. ${br}Injetar			${am}					]${br}" 
-  echo -e "${vm}x0${am}[${az} 5. ${br}Quebrar senha		${am}					]${br}"
-  echo -e "${vm}x0${am}[${az} 6. ${br}Sobre 			${am}					]${br}"
-  echo -e "${vm}x0${am}[${az} 99.${br} Sair			${am}			________________]${br}"
-  read -p "   >>> " opt
+echo -e "${am}  [_____________________________________________________________________]${br}"
+echo -e "${vm}x0${am}[${az} 1. ${br}Ativar modo monitoramento  ${am}					]${br}"
+echo -e "${vm}x0${am}[${az} 2. ${br}Varrer			${am}					]${br}"
+echo -e "${vm}x0${am}[${az} 3. ${br}Desautenticar 		${am}					]${br}" 
+echo -e "${vm}x0${am}[${az} 4. ${br}Injetar			${am}					]${br}" 
+echo -e "${vm}x0${am}[${az} 5. ${br}Quebrar senha		${am}					]${br}"
+echo -e "${vm}x0${am}[${az} 6. ${br}Sobre 			${am}					]${br}"
+echo -e "${vm}x0${am}[${az} 99.${br} Sair			${am}			________________]${br}"
+read -p " >>> " opt
 
 case "$opt" in
 	"1") iniciar_mon ;;
@@ -348,7 +351,7 @@ case "$opt" in
 	"4") injetar ;;
 	"5") brute_force_psk ;;
 	"6") sobre ;;	
-  "99") echo -e "${br}  [${vd} OK ${br}]${azul} Saindo do script ${br}"; matar_todos_processos; exit 0;;
+        "99") echo -e "${br}  [${vd} OK ${br}]${azul} Saindo do script ${br}"; matar_todos_processos; exit 0;;
 	*) echo -e "${br} [${vm} FALHA ${br}]${azul} Opcao invalida! ${br}" \n; menu ;;
 
 esac
@@ -357,7 +360,7 @@ done
 }
 
 cores
-#echo "handshake $HANDSHAKE"
+echo "wordlist $WORDLIST"
 banner
 verificar_usuario
 verificar_dependencias
