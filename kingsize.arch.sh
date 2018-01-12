@@ -11,6 +11,7 @@ DIR=`pwd`
 OUTPUT=`echo $DIR/Capturas`
 HANDSHAKE=`echo $DATA`
 MACATUALARCH=`ip address show dev $INTERFACE | awk '/ether/ {print $2}'`
+WORDLIST="/home/joao_lucas/wordlist/rockyou-1.txt"
 
 
 #INTERFACE=`ip route show | awk '/default via/ {print $5}'`
@@ -155,28 +156,29 @@ esac
 
 function varrer_todas_redes(){
 # Escanear todas redes encontradas pelo adaptador de rede sem fio. Caso contrario, emite um erro.
-(xterm -geometry 85x25 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACEMON" \
+(xterm -geometry 100x25+200+200 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACEMON" \
 -e "airodump-ng $INTERFACEMON" &) || \
 echo -e "${br}[${vm} FALHA ${br}]${azul} Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACEMON esta ativa! ${azul} \n"
 
 }
 
 function setar_parametros(){
-	PARAMETROS=$(yad --title "Setar parametros" \
-	--text "(*) Campos obrigatorios                                      \n" \
-	--form \
-	--field "* BSSID" "" \
-	--field "* ESSID" "" \
-	--field "* Channel" "" \
-	--field "Client" "" \
-	--field "* Monitor" " mon0" \
-	--field "* Wordlist" "/home/joao_lucas/wordlists/rockyou-1.txt" \
-	--field "* Saida" "$HANDSHAKE" \ 
-	--button gtk-ok \
-	--button cancel \
-	--center );
+  PARAMETROS=$(yad --title "teste" \
+    --text "Campos Obrigatorios\n" \
+     --form \
+     --field "bssid" "" \
+     --field "essid" "" \
+     --field "channel" "" \
+     --field "client" "" \
+     --field "monitor" "mon0" \
+     --field "wordlist" "$WORDLIST" \
+     --field "saida" "$HANDSHAKE" \
+     --button gtk-ok \
+     --button cancel \
+     --center);
+	 
 
-	#--field "[ Wordlist ]":BTN "yad --file --maximized" \
+  #--field "[ Wordlist ]":BTN "yad --file --maximized" \ 
 
 	BSSID=$(echo "$PARAMETROS" | cut -d '|' -f 1)
 	ESSID=$(echo "$PARAMETROS" | cut -d '|' -f 2)
@@ -185,23 +187,22 @@ function setar_parametros(){
 	INTERFACE_MON=$(echo "$PARAMETROS" | cut -d '|' -f 5)
 	WORDLIST=$(echo "$PARAMETROS" | cut -d '|' -f 6)
 	HS=$(echo "$PARAMETROS" | cut -d '|' -f 7)
-	#ARQ=$(echo "$PARAMETROS" | cut -d '|' -f 8)
+
 }
 
 function varrer_uma_rede() {
 setar_parametros
 
-# TA ERRADP SAMERDA
 # Verifica se os 4 parametros obrigatorios para uso da função estão setados
-#[ $BSSID  ] || echo "[ FALHA ] O campo obrigatorio BSSID esta vazio"
-#[ $ESSID ] || echo "[ FALHA ] O campo obrigatorio ESSID esta vazio"
-#[ $CHANNEL ] || echo "[ FALHA ] O campo obrigatorio Channel esta vazio"
-#[ $INTERFACE_MON ] || echo "[ FALHA ] O campo obrigatorio Monitor esta vazio"
+if [[ -z $BSSID ]]; then echo -e "[${vm} FALHA${br} ] O campo obrigatorio BSSID esta vazio!"; menu; fi;
+if [[ -z $ESSID ]]; then echo -e "[${vm} FALHA${br} ] O campo obrigatorio ESSID esta vazio!"; menu; fi;
+if [[ -z $CHANNEL ]]; then echo -e "[${vm} FALHA${br} ] O campo obrigatorio Channel esta vazio!"; menu; fi;
+if [[ -z $INTERFACE_MON ]]; then echo -e "[${vm} FALHA${br} ] O campo obrigatorio Monitor esta vazio!"; menu; fi;
 
 # Ajustar a interface de monitoramento para varrer hosts apenas no canal desejado
 iw dev $INTERFACEMON set channel $CHANNEL
 # Capture no minimo 5 mil pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
-(xterm -geometry 85x25 -title "Escaneando rede a sem fio $ESSID" \
+(xterm -geometry 100x25+200+200 -title "Escaneando rede a sem fio $ESSID" \
 -e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $OUTPUT/$HANDSHAKE $INTERFACEMON" &) || \
 echo -e "${br}[${vm} FALHA ${br}]${azul} Ocorreram erros em escanear a rede sem fio: $ESSID ${br} \n"
 
@@ -259,7 +260,6 @@ echo "Wordlist: $WORDLIST"
 # Realizar a quebra da senha, por meio de um dicionario (wordlist)
 (aircrack-ng -w $WORDLIST $BPM | tee -a resultado_quebra) || \
 echo -e "${br}[${vm} FALHA ${br}]${azul} Ocorreram erros, verifique se foi capturado 4-way handshake e se o caminho da wordlist esta correto ${br} \n"
-
 
 }
 
@@ -344,7 +344,7 @@ echo -e "${vm}x0${am}[${az} 4. ${br}Injetar			${am}					]${br}"
 echo -e "${vm}x0${am}[${az} 5. ${br}Quebrar senha		${am}					]${br}"
 echo -e "${vm}x0${am}[${az} 6. ${br}Sobre 			${am}					]${br}"
 echo -e "${vm}x0${am}[${az} 99.${br} Sair			${am}			________________]${br}"
-read -p "  [-> " opt
+read -p "   >>> " opt
 
 case "$opt" in
 	"1") iniciar_mon ;;
