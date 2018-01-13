@@ -1,7 +1,6 @@
 # King Size Cracking
 
-King Size é um simples processo automatizado que realiza testes de segurança no protocolo de encriptação de dados WPA/WPA2.
-
+King Size é um simples processo automatizado que realiza testes de segurança no protocolo de encriptação de dados WPA/WPA2 utilizando a suite aircrack-ng e yad dialog.
 
 ## Características:
 * Varre todas redes sem fio que estão ao alcance em busca de informações dos AP, tais como: Nome da rede, endereço MAC do AP, encriptação, cifra criptográfica, protocolo de autenticação, canal e amplitude do sinal.
