@@ -33,30 +33,29 @@ function cores() {
 
 function verificar_dependencias(){
 	if ! hash yad 2> /dev/null; then
-		echo -e "${br}  [${vm} FALHA ${br}]${azul} yad dialog nao instalado! ${br}"
+		echo -e "  [${vm} FALHA ${br}]${az} yad dialog nao instalado! ${br}"
 		exit 1
 	fi
 
 	if ! hash aircrack-ng 2>/dev/null; then
-
-		echo -e "${br}  [${vm} FALHA ${br}]${azul} aircrack-ng nao instalado! ${br}"
+		echo -e "  [${vm} FALHA ${br}]${az} aircrack-ng nao instalado! ${br}"
 		exit 1
 	fi
 
 	if ! hash reaver 2> /dev/null; then
-		echo -e "${br}  [${vm} FALHA ${br}]${azul} reaver nao instalado! ${br}"
+		echo -e "  [${vm} FALHA ${br}]${az} reaver nao instalado! ${br}"
 		exit 1
 	fi
+
 }
 
 function verificar_usuario(){
 	if [ `id -u` != "0" ]; then 
-		echo -e "${br}  [${vm} FALHA ${br}]${azul} Executar o script como root! ${br}"
+		echo -e "  [${vm} FALHA ${br}]${az} Executar o script como root! ${br}"
 	       	exit 1
        	fi
 	
 }
-
 
 function criar_diretorio_capturas(){
 	if [ ! -d "$OUTPUT" ]; then mkdir $OUTPUT; fi;
@@ -158,40 +157,36 @@ echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em escanear todas as 
 }
 
 function setar_parametros(){
-	PARAMETROS=$(yad --title "Setar parametros" \
-	--text "(*) Campos obrigatorios                                      \n" \
-	--form \
-	--field "* BSSID" "" \
-	--field "* ESSID" "" \
-	--field "* Channel" "" \
-	--field "Client" "" \
-	--field "* Monitor" " mon0" \
-	--field "* Wordlist" "$WORDLIST" \
-	--field "* Saida" "$HANDSHAKE" \ 
-	--button gtk-ok \
-	--button cancel \
-	--center);
+  PARAMETROS=$(yad --title "Setar parametros" --text "* Campos Obrigatorios\n" --form --field "* bssid" "" --field "* essid" "" --field "* channel" "" --field "client" "" --field "* monitor" "$INTERFACEMON" --field "wordlist" "$WORDLIST" --field "saida" "$HANDSHAKE" --button gtk-ok --button cancel --center);
+  echo "param : $PARAMETROS"
 
-	#--field "[ Wordlist ]":BTN "yad --file --maximized" \
 
 	BSSID=$(echo "$PARAMETROS" | cut -d '|' -f 1)
 	ESSID=$(echo "$PARAMETROS" | cut -d '|' -f 2)
 	CHANNEL=$(echo "$PARAMETROS" | cut -d '|' -f 3)
 	CLIENT=$(echo "$PARAMETROS" | cut -d '|' -f 4)
-	INTERFACE_MON=$(echo "$PARAMETROS" | cut -d '|' -f 5)
+	INTERFACEMON=$(echo "$PARAMETROS" | cut -d '|' -f 5)
 	WORDLIST=$(echo "$PARAMETROS" | cut -d '|' -f 6)
 	HS=$(echo "$PARAMETROS" | cut -d '|' -f 7)
 	#ARQ=$(echo "$PARAMETROS" | cut -d '|' -f 8)
+
+  #echo "BSSID $BSSID"
+  #echo "ESSID $ESSID"
+  #echo "CHANNEL $CHANNEL"
+  #echo "CLIENT $CLIENT"
+  #echo "INTERFACEMON $INTERFACEMON"
+  #echo "WORDLIST$WORDLIST"
+  #echo "HANDSHAKE $HS"
 }
 
 function varrer_uma_rede() {
 setar_parametros
 
 # Verifica se os 4 parametros obrigatorios para uso da função estão setados
-if [[ -z $BSSID  ]]; then echo "[ FALHA ] O campo obrigatorio BSSID esta vazio"; menu; fi;
-if [[ -z $ESSID ]]; then echo "[ FALHA ] O campo obrigatorio ESSID esta vazio"; menu; fi;
-if [[ -z $CHANNEL ]]; then echo "[ FALHA ] O campo obrigatorio Channel esta vazio"; menu; fi;
-if [[ -z $INTERFACE_MON ]]; then echo "[ FALHA ] O campo obrigatorio Monitor esta vazio"; menu; fi;
+if [[ -z $BSSID  ]]; then echo "[${vm} FALHA${br} ] O campo obrigatorio BSSID esta vazio!"; menu; fi;
+if [[ -z $ESSID ]]; then echo "[${vm} FALHA${br} ] O campo obrigatorio ESSID esta vazio!"; menu; fi;
+if [[ -z $CHANNEL ]]; then echo "[${vm} FALHA${br} ] O campo obrigatorio Channel esta vazio!"; menu; fi;
+if [[ -z $INTERFACEMON ]]; then echo "[${vm} FALHA${br} ] O campo obrigatorio Monitor esta vazio!"; menu; fi;
 
 # Ajustar a interface de monitoramento para varrer hosts apenas no canal desejado
 iw dev $INTERFACEMON set channel $CHANNEL 2> /dev/null
@@ -242,8 +237,7 @@ function brute_force_psk(){
 
 # recebe o nome correto do arquivo handshake que foi criado com o airodump
 BPM=`ls $OUTPUT | grep $HANDSHAKE | grep cap$`
-echo "SEM dir $BPM"
-
+#echo "SEM dir $BPM"
 BPM=$OUTPUT/$BPM
 #echo "Caminho do arquivo handshake: $BPM" 
 #echo "Wordlist: $WORDLIST"
@@ -252,13 +246,14 @@ BPM=$OUTPUT/$BPM
 #wpaclean $HS.cap $OUTPUT/handshake.cap 
 
 # Realizar a quebra da senha, por meio de um dicionario (wordlist)
-(aircrack-ng -w $WORDLIST $BPM | tee -a result_quebra) || \
+(aircrack-ng -w $WORDLIST $BPM | tee -a result_quebra 2> /dev/null) || \
 echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros, verifique se foi capturado 4-way handshake e se o caminho da wordlist esta correto ${br} \n"
 
 
-SENHA=$(cat -v result_quebra | awk '/KEY FOUND!/ {print $4}' | uniq)
+SENHA=$(cat -v result_quebra | awk '/KEY FOUND!/ {print $4}' | uniq | tac | head -n1)
 
-echo "[][][][][] SENHA ENCONTRADA: $SENHA [][][][][]"
+echo -e "\n${az}         [][][][][]${am} SENHA ENCONTRADA:${vm} $SENHA${az} [][][][][]${br}"
+
 }
 
 function matar_todos_processos() {
@@ -333,6 +328,7 @@ echo -e "${am}   _---------[${br} Interface:${am} $INTERFACE${br} - MAC Atual:${
 #}
 
 function menu(){
+trap menu 2 20
 while true; do
 echo -e "${am}  [_____________________________________________________________________]${br}"
 echo -e "${vm}x0${am}[${az} 1. ${br}Ativar modo monitoramento  ${am}					]${br}"
@@ -360,7 +356,6 @@ done
 }
 
 cores
-echo "wordlist $WORDLIST"
 banner
 verificar_usuario
 verificar_dependencias
