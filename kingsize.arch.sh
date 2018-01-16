@@ -1,5 +1,15 @@
 #!/bin/bash
 
+#  KingSize tem como função realizar testes automatizados de segurança em protocolos de encriptação de dados WPA/WPA2,
+# utilizando a suite aircrack-ng, xterm e yad dialogi.
+#
+# The MIT License (MIT) 
+# Pacotes requeridos: xterm aircrack-ng yad
+# Date: 2018-01-16.v1
+#
+# Author: João Lucas <joaolucas@linuxmail.org>
+#
+
 # Configurando variaveis do shell
 DATA=`date +'%d-%m-%Y-%H-%M'`
 VERSION="v0.1"
@@ -20,7 +30,6 @@ WORDLIST="/home/joao_lucas/wordlists/rockyou-1.txt"
 #IPINTERNO=`ip route show | awk '/src/ {print $9}'`
 #IPEXTERNO=`curl -s ipinfo.io/ip`
 #MACATUALKALI=`ip address | awk '/ether/ {print $2}'`
-#MACFALSO=
 
 function cores() {
 	escape="\033";
@@ -81,14 +90,14 @@ function iniciar_mon() {
 # Verifica se a interface de monitoramento ja esta ativada
 iwconfig $INTERFACEMON &> /dev/null
 if [ $? -eq 0 ]; then
-	echo -e "${br}  [${vd} OK ${br}]${azul} Interface de monitoramento ativa! ${br} \n"
+	echo -e "${br}  [${vd} OK ${br}]${az} Interface de monitoramento ativa! ${br} \n"
 	menu
 fi
 
 # Adiciona a interface de monitoramento wlan0mon. Caso contrario, emite mensagem de erro
 iw dev $INTERFACE interface add $INTERFACEMON type monitor &> /dev/null && ifconfig $INTERFACEMON up &> /dev/null && \
-echo -e "${br}  [${vd} OK ${br}]${azul} Monitoramento ativado! ${br} \n" || \
-echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em iniciar o modo monitor! ${br} \n"
+echo -e "${br}  [${vd} OK ${br}]${az} Monitoramento ativado! ${br} \n" || \
+echo -e "${br}  [${vm} FALHA ${br}]${az} Ocorreram erros em iniciar o modo monitor! ${br} \n"
 
 }
 
@@ -124,7 +133,7 @@ case "$opt" in
 	"1") varrer_todas_redes ;;
 	"2") varrer_uma_rede ;;
 	"99") menu ;;
-	*) echo -e "${br} [${vm} FALHA ${br}]${azul} Opcao invalida! ${br} \n"; menu ;;
+	*) echo -e "${br} [${vm} FALHA ${br}]${az} Opcao invalida! ${br} \n"; menu ;;
 esac
 
 }
@@ -142,7 +151,7 @@ case "$opt" in
 	"2") deauth_cliente_especifico ;;
 	"3") deauth_brute_force ;;
 	"99") menu ;;
-	*) echo -e "${br} [${vm} FALHA ${br}]${azul} Opcao invalida! ${br} \n"; menu ;;
+	*) echo -e "${br} [${vm} FALHA ${br}]${az} Opcao invalida! ${br} \n"; menu ;;
 
 esac
 
@@ -152,7 +161,7 @@ function varrer_todas_redes(){
 # Escanear todas redes encontradas pelo adaptador de rede sem fio. Caso contrario, emite um erro.
 (xterm -geometry 100x23+680+0 -title "Escaneando todas as redes sem fio alcancadas pela interface de monitoramento $INTERFACEMON" \
 -e "airodump-ng $INTERFACEMON" &) || \
-echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACEMON esta ativa! ${azul} \n"
+echo -e "${br}  [${vm} FALHA ${br}]${az} Ocorreram erros em escanear todas as redes, verifique a interface $INTERFACEMON esta ativa! ${az} \n"
 
 }
 
@@ -193,7 +202,7 @@ iw dev $INTERFACEMON set channel $CHANNEL 2> /dev/null
 # Capture no minimo 5 mil pacotes do tipo data frame (#Data) antes de tentar realizar a quebra da senha
 (xterm -geometry 100x23+680+360 -title "Escaneando rede a sem fio $ESSID" \
 -e "airodump-ng --bssid $BSSID --channel $CHANNEL --write $OUTPUT/$HANDSHAKE $INTERFACEMON" &) || \
-echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em escanear a rede sem fio: $ESSID ${br} \n"
+echo -e "${br}  [${vm} FALHA ${br}]${az} Ocorreram erros em escanear a rede sem fio: $ESSID ${br} \n"
 
 }
 
@@ -201,7 +210,7 @@ function deauth_todos_clientes() {
 # Envia 1 pacote de Desautenticação para todas as STA conectadas ao AP
 (xterm -geometry 100x23+250+200 -title "Enviando pacotes de desautenticação (Deauth) para todos as STA conectadas a rede sem fio: $ESSID" \
 -e  "aireplay-ng -0 1 -a $BSSID -e $ESSID $INTERFACEMON --ignore-negative-one" &) || \
-echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em fazer deauth dos hosts no AP: $ESSID ${br} \n"
+echo -e "${br}  [${vm} FALHA ${br}]${az} Ocorreram erros em fazer deauth dos hosts no AP: $ESSID ${br} \n"
 
 }
 
@@ -209,7 +218,7 @@ function deauth_cliente_especifico() {
 # Envia 1 pacote de Desautenticação para uma STA conectada a um AP especifico
 (xterm -geometry 100x23+250+200 -title "Desautenticando (Deauth) a STA $CLIENT na rede $ESSID" \
 -e "aireplay-ng -0 1 -a $BSSID -c $CLIENT $INTERFACEMON --ignore-negative-one" &) || \
-echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID ${br} \n"
+echo -e "${br}  [${vm} FALHA ${br}]${az} Ocorreram erros em fazer o deuth da STA $CLIENT na rede $ESSID ${br} \n"
 
 }
 
@@ -217,7 +226,7 @@ function deauth_brute_force() {
 # Envia infinitos pacotes de deauth, causando um ataque de negacao de servico
 (xterm -geometry 100x23+250+200 -title "Enviando infinitos pacotes de deauth" \
 -e "aireplay-ng -0 0 -a $BSSID -e $ESSID $INTERFACEMON --ignore-negative-one" &) || \
-echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros em realizar negacao de servicos na rede sem fio: $ESSID ${br} \n"
+echo -e "${br}  [${vm} FALHA ${br}]${az} Ocorreram erros em realizar negacao de servicos na rede sem fio: $ESSID ${br} \n"
 
 }
 
@@ -225,7 +234,7 @@ function injetar(){
 #while true; do
 # Realizar testes de injecao contra um AP
 aireplay-ng -9 -a $BSSID -a $BSSID $INTERFACEMON --ignore-negative-one || \
-echo -e "${br}  [${vm} FALHA ${br}]${azul} Nao foi possivel injetar pacotes no AP: $ESSID ${br} \n"
+echo -e "${br}  [${vm} FALHA ${br}]${az} Nao foi possivel injetar pacotes no AP: $ESSID ${br} \n"
 
 #done
 
@@ -247,7 +256,7 @@ BPM=$OUTPUT/$BPM
 
 # Realizar a quebra da senha, por meio de um dicionario (wordlist)
 (aircrack-ng -w $WORDLIST $BPM | tee -a result_quebra 2> /dev/null) || \
-echo -e "${br}  [${vm} FALHA ${br}]${azul} Ocorreram erros, verifique se foi capturado 4-way handshake e se o caminho da wordlist esta correto ${br} \n"
+echo -e "${br}  [${vm} FALHA ${br}]${az} Ocorreram erros, verifique se foi capturado 4-way handshake e se o caminho da wordlist esta correto ${br} \n"
 
 
 SENHA=$(cat -v result_quebra | awk '/KEY FOUND!/ {print $4}' | uniq | tac | head -n1)
@@ -347,8 +356,8 @@ case "$opt" in
 	"4") injetar ;;
 	"5") brute_force_psk ;;
 	"6") sobre ;;	
-        "99") echo -e "${br}  [${vd} OK ${br}]${azul} Saindo do script ${br}"; matar_todos_processos; exit 0;;
-	*) echo -e "${br} [${vm} FALHA ${br}]${azul} Opcao invalida! ${br}" \n; menu ;;
+        "99") echo -e "${br}  [${vd} OK ${br}]${az} Saindo do script ${br}"; matar_todos_processos; exit 0;;
+	*) echo -e "${br} [${vm} FALHA ${br}]${az} Opcao invalida! ${br}" \n; menu ;;
 
 esac
 done
